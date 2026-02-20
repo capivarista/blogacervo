@@ -1,0 +1,277 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* -------------------------------------------------
+   VARIÁVEIS DE COR
+   ------------------------------------------------- */
+:root {
+    --background: #000000;
+    --foreground: #00ff88;
+    --header-h: 96px;
+}
+
+/* -------------------------------------------------
+   BODY
+   ------------------------------------------------- */
+body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: 'Courier New', Courier, monospace;
+    background-image:
+            linear-gradient(rgba(0, 20, 0, 0.9) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 20, 0, 0.9) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+/* -------------------------------------------------
+   UTILITÁRIOS CUSTOMIZADOS
+   ------------------------------------------------- */
+.glass-panel {
+    background: rgba(0, 10, 0, 0.9);
+    backdrop-filter: blur(10px);
+    border: 1px solid #00ff88;
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.15);
+    border-radius: 4px;
+}
+
+/* -------------------------------------------------
+   INPUTS
+   ------------------------------------------------- */
+.cyber-field {
+    width: 100%;
+    background: #000500;
+    border: 1px solid #004422;
+    color: #00ff88;
+    padding: 0.75rem 1rem;
+    outline: none;
+    transition: all 0.2s;
+    font-family: monospace;
+    font-size: 0.875rem;
+}
+
+.cyber-field:focus {
+    border-color: #00ff88;
+    box-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
+    background: #001105;
+}
+
+/* -------------------------------------------------
+   BOTÃO BASE
+   ------------------------------------------------- */
+.btn-cyber {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+
+    background: #003311;
+    border: 1px solid #00ff88;
+    color: #00ff88;
+
+    font-family: monospace;
+    font-size: 0.75rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-cyber:hover {
+    background: #00ff88;
+    color: #000;
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.6);
+    transform: translateY(-1px);
+}
+
+.btn-cyber:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    filter: grayscale(1);
+}
+
+/* -------------------------------------------------
+   BOTÕES DO HEADER
+   ------------------------------------------------- */
+.cyber-btn-nav {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-family: inherit;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    border: 1px solid rgba(0, 255, 136, 0.35);
+    color: rgba(0, 255, 136, 0.75);
+    background: rgba(0, 255, 136, 0.04);
+}
+
+.cyber-btn-nav:hover {
+    border-color: rgba(0, 255, 136, 0.9);
+    color: #00ff88;
+    background: rgba(0, 255, 136, 0.12);
+    box-shadow: 0 0 20px rgba(0, 255, 136, 0.4);
+    transform: translateY(-1px);
+}
+
+.cyber-btn-danger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    font-family: inherit;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    border: 1px solid rgba(220, 38, 38, 0.3);
+    color: rgba(220, 38, 38, 0.75);
+    background: rgba(127, 29, 29, 0.1);
+}
+
+.cyber-btn-danger:hover {
+    border-color: rgba(220, 38, 38, 0.7);
+    color: rgba(248, 113, 113, 1);
+    background: rgba(127, 29, 29, 0.3);
+    box-shadow: 0 0 16px rgba(220, 38, 38, 0.3);
+    transform: translateY(-1px);
+}
+
+/* -------------------------------------------------
+   DIVISOR VERTICAL DO HEADER
+   ------------------------------------------------- */
+.header-divider {
+    width: 2px;
+    height: 28px;
+    margin: 0 0.5rem;
+    background: linear-gradient(to bottom, #003311, #001a00);
+}
+
+/* -------------------------------------------------
+   EFEITOS DE IMAGEM
+   ------------------------------------------------- */
+.cyber-image-container {
+    position: relative;
+    overflow: hidden;
+    background-color: #000;
+}
+
+.cyber-image-container::after {
+    content: " ";
+    display: block;
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+            rgba(18, 16, 16, 0) 50%,
+            rgba(0, 0, 0, 0.6) 50%
+    ), linear-gradient(
+            90deg,
+            rgba(255, 0, 0, 0.06),
+            rgba(0, 255, 0, 0.02),
+            rgba(0, 0, 255, 0.06)
+    );
+    z-index: 2;
+    background-size: 100% 3px, 3px 100%;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.cyber-image-filter {
+    filter: grayscale(100%) sepia(100%) hue-rotate(90deg) saturate(250%) brightness(1.1) contrast(1.2);
+    transition: all 0.4s ease;
+    opacity: 0.9;
+}
+
+.cyber-image-container:hover .cyber-image-filter {
+    filter: none;
+    opacity: 1;
+}
+
+.cyber-image-container:hover::after {
+    opacity: 0.1;
+}
+
+/* -------------------------------------------------
+   SCROLLBAR
+   ------------------------------------------------- */
+::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: #004422;
+    border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #00ff88;
+}
+
+
+.custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: #004422 transparent;
+}
+.custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #004422;
+    border-radius: 2px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #00ff88;
+}
+
+/* -------------------------------------------------
+   BACKGROUND Z‑INDEX
+   ------------------------------------------------- */
+body::before {
+    content: " ";
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(
+            rgba(18, 16, 16, 0) 50%,
+            rgba(0, 0, 0, 0.1) 50%
+    ), linear-gradient(
+            90deg,
+            rgba(255, 0, 0, 0.03),
+            rgba(0, 255, 0, 0.01),
+            rgba(0, 0, 255, 0.03)
+    );
+    z-index: -1;
+    background-size: 100% 2px, 3px 100%;
+    pointer-events: none;
+}
+
+/* -------------------------------------------------
+   MARKDOWN STYLES
+   ------------------------------------------------- */
+.markdown-content h1 {
+    color: #00ff88;
+    font-weight: bold;
+    border-bottom: 1px dashed #004422;
+    margin: 1rem 0;
+}
+.markdown-content p {
+    margin-bottom: 0.5rem;
+}
