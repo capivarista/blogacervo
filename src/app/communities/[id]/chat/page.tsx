@@ -38,7 +38,7 @@ export default async function ChatPage({ params }: { params: Promise<{ id: strin
                     <ArrowLeft />
                 </Link>
                 <h1 className="text-xl font-bold text-white tracking-widest">
-                    ACERVO // CHAT // <span className="text-[#00ff88]">{data.community.nome.toUpperCase()}</span>
+                    ACERVO // CHAT // <span className="text-[#00ff88]">{data.comunidade.nome.toUpperCase()}</span>
                 </h1>
             </header>
 
