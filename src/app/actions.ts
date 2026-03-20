@@ -503,7 +503,7 @@ export async function getCommunityChatData(communityId: number) {
     });
 
     const channels = await prisma.canais.findMany({
-        where: { community_id: communityId },
+        where: { comunidade_id: communityId },
     });
 
     const members = await prisma.membros_comunidade.findMany({
