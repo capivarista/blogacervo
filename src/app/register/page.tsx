@@ -1,6 +1,6 @@
 import RegisterForm from '@/components/RegisterForm';
 
-export const runtime = 'edge';
+
 
 export const metadata = {
     title: "REGISTER // BLOG.ACERVOBOOK",

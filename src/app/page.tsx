@@ -7,7 +7,7 @@ import LoginForm from '@/components/LoginForm';
 import { Post } from '@/types';
 import { Activity } from 'lucide-react';
 
-export const runtime = 'edge';
+
 
 export default async function Page() {
     const userId = (await cookies()).get('user_id')?.value;

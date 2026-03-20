@@ -3,7 +3,7 @@ import CommunityInterface from '@/components/CommunityInterface';
 import { Network } from 'lucide-react';
 import Link from 'next/link';
 
-export const runtime = 'edge';
+
 
 export const metadata = {
     title: "COMMUNITIES // BLOG.ACERVOBOOK",

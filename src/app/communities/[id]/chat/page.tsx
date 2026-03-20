@@ -3,7 +3,7 @@ import ChatInterface from '@/components/ChatInterface';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 
-export const runtime = 'edge';
+
 
 export const metadata = {
     title: "CHAT // BLOG.ACERVOBOOK",
