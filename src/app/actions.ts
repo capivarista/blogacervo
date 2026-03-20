@@ -347,7 +347,12 @@ export async function likePost(postId: number) {
 
     if (existing) {
         await prisma.curtidas.delete({
-            where: { id: existing.id },
+            where: {
+                postagem_id_usuario_id: {
+                    postagem_id: postId,
+                    usuario_id: parseInt(userId),
+                }
+            },
         });
     } else {
         await prisma.curtidas.create({
@@ -421,7 +426,7 @@ export async function createCommunity(formData: FormData) {
 
         await prisma.canais.create({
             data: {
-                community_id: community.id,
+                comunidade_id: community.id, // <-- Mude de community_id para comunidade_id
                 nome: 'geral',
             },
         });
@@ -557,7 +562,7 @@ export async function createChannel(communityId: number, channelName: string) {
 
     await prisma.canais.create({
         data: {
-            community_id: communityId,
+            comunidade_id: communityId, // <-- Mude de community_id para comunidade_id
             nome: channelName.toLowerCase().replace(/\s/g, '-'),
         },
     });
