@@ -3,30 +3,15 @@
 import { useState } from 'react';
 import { likePost, createComment, deletePost } from '@/app/actions';
 import { Heart, MessageSquare, Trash2, Send, User, ChevronDown, ChevronUp } from 'lucide-react';
-
-interface Comment {
-    id: number;
-    conteudo: string;
-    nome_usuario: string;
-}
-
-interface Post {
-    id: number;
-    titulo: string;
-    conteudo: string;
-    imagem_url?: string;
-    nome_usuario: string;
-    likes_count: number;
-    data_criacao: string;
-    comentarios: Comment[];
-    current_user_is_admin: boolean;
-}
+import { Post } from '@/types';
+import { toast } from 'sonner';
 
 export default function PostCard({ post }: { post: Post }) {
     const [showComments, setShowComments] = useState(false);
     const [commentText, setCommentText] = useState('');
     const [isLiking, setIsLiking] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [imageError, setImageError] = useState(false);
 
     const formattedDate = new Date(post.data_criacao).toLocaleDateString('pt-BR', {
         day: '2-digit',
@@ -42,15 +27,22 @@ export default function PostCard({ post }: { post: Post }) {
     };
 
     const handleDelete = async () => {
-        if (!confirm('Confirmar exclusão do registro?')) return;
-        setIsDeleting(true);
-        await deletePost(post.id);
-        setIsDeleting(false);
+        toast.promise(
+            async () => {
+                setIsDeleting(true);
+                await deletePost(post.id);
+            },
+            {
+                loading: 'Excluindo registro...',
+                success: 'Registro excluído com sucesso!',
+                error: 'Falha ao excluir o registro.',
+            },
+        );
     };
 
     return (
         <article
-            className={`relative overflow-hidden transition-all duration-300 bg-[#000a04] border border-[#00ff88]/25 hover:border-[#00ff88]/55 shadow-[0_0_20px_rgba(0,255,136,0.04),inset_0_0_40px_rgba(0,255,136,0.02)] hover:shadow-[0_0_35px_rgba(0,255,136,0.1),inset_0_0_40px_rgba(0,255,136,0.03)] ${
+            className={`relative overflow-hidden transition-all duration-300 bg-[#000a04] border border-[#00ff88]/25 hover:border-[#00ff88]/55 shadow-[0_0_20px_rgba(0,255,136,0.05)] hover:shadow-[0_0_35px_rgba(0,255,136,0.15)] ${
                 isDeleting ? 'opacity-30 pointer-events-none scale-[0.98]' : ''
             }`}
             style={{
@@ -78,7 +70,7 @@ export default function PostCard({ post }: { post: Post }) {
                     </div>
                 </div>
 
-                {/* BOTÃO DA LIXEIRA (deu tanto erro) */}
+                {/* BOTÃO DA LIXEIRA */}
                 {post.current_user_is_admin && (
                     <button
                         onClick={handleDelete}
@@ -91,22 +83,30 @@ export default function PostCard({ post }: { post: Post }) {
                 )}
             </div>
 
-            {/* ── IMAGEM ── */}
-            {post.imagem_url && (
-                <div className="cyber-image-container w-full bg-black border-b border-[#00ff88]/15">
+            {/* ── IMAGEM NATIVA (HTML <img>) ── */}
+            {post.imagem_url && !imageError && (
+                <div className="flex items-center justify-center w-full overflow-hidden bg-black border-b border-[#00ff88]/15">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                         src={post.imagem_url}
                         alt={post.titulo}
-                        className="cyber-image-filter w-full h-auto block max-h-[600px] object-contain object-center"
+                        className="w-auto h-auto max-w-full max-h-[450px] object-contain"
+                        onError={() => setImageError(true)}
                     />
+                </div>
+            )}
+
+            {/* Fallback caso a imagem quebre ou não exista */}
+            {imageError && (
+                <div className="flex items-center justify-center w-full h-32 bg-[#000a04] border-b border-[#00ff88]/10">
+                    <span className="text-xs font-mono text-[#004422]">IMAGEM: CORROMPIDA</span>
                 </div>
             )}
 
             {/* ── CORPO ── */}
             <div className="px-5 pt-5 pb-3">
-                <h2 className="text-base md:text-lg font-black font-mono tracking-[0.06em] leading-snug mb-3 uppercase text-white">
-                    <span className="text-[#00ff88]/40 mr-2 font-normal">//</span>
+                <h2 className="text-base font-black md:text-lg font-mono tracking-[0.06em] leading-snug mb-3 uppercase text-white">
+                    <span className="mr-2 font-normal text-[#00ff88]/40">//</span>
                     {post.titulo}
                 </h2>
                 <p className="text-sm font-mono leading-relaxed whitespace-pre-wrap break-words text-[#88ccaa]/80">
@@ -115,11 +115,11 @@ export default function PostCard({ post }: { post: Post }) {
             </div>
 
             {/* ── RODAPÉ ── */}
-            <div className="px-5 py-4 mt-1 flex items-center gap-4 border-t border-[#00ff88]/10 bg-[#001105]/50">
+            <div className="flex items-center gap-4 px-5 py-4 mt-1 border-t bg-[#001105]/50 border-[#00ff88]/10">
                 <button
                     onClick={handleLike}
                     disabled={isLiking}
-                    className="flex items-center gap-2 px-4 py-2 font-mono text-[11px] tracking-[0.12em] uppercase rounded-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200 border border-[#00ff88]/40 text-[#00ff88] bg-transparent hover:bg-[#00ff88]/20 hover:border-[#00ff88] hover:shadow-[0_0_10px_rgba(0,255,136,0.2)]"
+                    className="flex items-center gap-2 px-4 py-2 font-mono text-[11px] tracking-[0.12em] uppercase transition-all duration-200 border rounded-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed border-[#00ff88]/40 text-[#00ff88] bg-transparent hover:bg-[#00ff88]/20 hover:border-[#00ff88] hover:shadow-[0_0_10px_rgba(0,255,136,0.2)]"
                 >
                     <Heart
                         size={14}
@@ -130,7 +130,7 @@ export default function PostCard({ post }: { post: Post }) {
 
                 <button
                     onClick={() => setShowComments((v) => !v)}
-                    className={`flex items-center gap-2 px-4 py-2 font-mono text-[11px] tracking-[0.12em] uppercase rounded-sm cursor-pointer transition-all duration-200 border bg-transparent ${
+                    className={`flex items-center gap-2 px-4 py-2 font-mono text-[11px] tracking-[0.12em] uppercase transition-all duration-200 border rounded-sm cursor-pointer bg-transparent ${
                         showComments
                             ? 'border-[#00ff88] bg-[#00ff88]/20 text-[#00ff88] shadow-[0_0_10px_rgba(0,255,136,0.2)]'
                             : 'border-[#00ff88]/40 text-[#00ff88] hover:bg-[#00ff88]/20 hover:border-[#00ff88] hover:shadow-[0_0_10px_rgba(0,255,136,0.2)]'
@@ -144,7 +144,7 @@ export default function PostCard({ post }: { post: Post }) {
                     }
                 </button>
 
-                <div className="flex-1 h-px bg-[#002211]" />
+                <div className="flex-1 h-px bg-[#004422]/50" />
                 <span className="text-[8px] font-mono tracking-widest select-none text-[#004422]">
                     ID::{String(post.id).padStart(6, '0')}
                 </span>
@@ -154,14 +154,14 @@ export default function PostCard({ post }: { post: Post }) {
             {showComments && (
                 <div className="border-t border-[#00ff88]/20 bg-[#000a04]">
                     {post.comentarios.length > 0 ? (
-                        <div className="px-5 py-4 space-y-4 max-h-52 overflow-y-auto custom-scrollbar">
+                        <div className="px-5 py-4 space-y-4 overflow-y-auto max-h-52 custom-scrollbar">
                             {post.comentarios.map((c) => (
                                 <div key={c.id} className="flex gap-3">
-                                    <div className="flex items-center justify-center w-6 h-6 shrink-0 mt-0.5 bg-[#001408] border border-[#00ff88]/30 rounded-sm">
+                                    <div className="flex items-center justify-center w-6 h-6 rounded-sm shrink-0 mt-0.5 bg-[#001408] border border-[#00ff88]/30">
                                         <User size={12} className="text-[#00ff88]/60" />
                                     </div>
                                     <div>
-                                        <span className="text-xs font-mono font-bold uppercase tracking-wider mr-2 text-[#00ff88]">
+                                        <span className="mr-2 text-xs font-mono font-bold tracking-wider uppercase text-[#00ff88]">
                                             {c.nome_usuario}
                                         </span>
                                         <span className="text-xs font-mono leading-relaxed text-[#ccffdd]/80">
@@ -191,13 +191,13 @@ export default function PostCard({ post }: { post: Post }) {
                             value={commentText}
                             onChange={(e) => setCommentText(e.target.value)}
                             placeholder="INSERIR RESPOSTA..."
-                            className="flex-1 bg-transparent px-3 py-4 font-mono text-xs outline-none text-[#ccffdd] placeholder:text-[#004422]"
+                            className="flex-1 px-3 py-4 font-mono text-xs outline-none bg-transparent text-[#ccffdd] placeholder:text-[#004422]"
                             autoComplete="off"
                         />
                         <button
                             type="submit"
                             disabled={!commentText.trim()}
-                            className="flex items-center justify-center px-6 py-4 transition-colors duration-150 cursor-pointer border-l border-[#00ff88]/20 text-[#00ff88] bg-transparent hover:bg-[#00ff88]/25 active:bg-[#00ff88]/35 disabled:opacity-30 disabled:cursor-not-allowed disabled:bg-transparent"
+                            className="flex items-center justify-center px-6 py-4 transition-colors duration-150 border-l cursor-pointer border-[#00ff88]/20 text-[#00ff88] bg-transparent hover:bg-[#00ff88]/25 active:bg-[#00ff88]/35 disabled:opacity-30 disabled:cursor-not-allowed disabled:bg-transparent"
                         >
                             <Send size={16} />
                         </button>

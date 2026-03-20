@@ -14,12 +14,12 @@ export default function LoginForm() {
 
             {/* Cabeçalho */}
             <div className="flex flex-col items-center gap-4">
-                <div className="bg-[#00ff88]/5 p-3 rounded-full border border-[#00ff88]/30">
-                    <Terminal size={32} className="text-[#00ff88]" />
+                <div className="bg-cyber-primary/5 p-3 rounded-full border border-cyber-primary/30">
+                    <Terminal size={32} className="text-cyber-primary" />
                 </div>
                 <div className="text-center">
                     <h1 className="text-2xl font-bold text-white tracking-[0.2em]">
-                        ACERVO<span className="text-[#00ff88]">BOOK</span>
+                        ACERVO<span className="text-cyber-primary">BOOK</span>
                     </h1>
                     <p className="text-[10px] text-gray-500 font-mono mt-1 tracking-widest uppercase">
                         Sistema de Acesso Restrito
@@ -30,7 +30,7 @@ export default function LoginForm() {
             {/* Formulário */}
             <form action={action} className="flex flex-col gap-4 w-full">
                 {state?.error && (
-                    <div className="bg-red-500/10 border border-red-500/50 text-red-400 text-xs p-3 font-mono text-center">
+                    <div className="p-3 font-mono text-xs text-center border bg-cyber-danger/10 border-cyber-danger/50 text-cyber-danger/80">
                         PROIBIDO: {state.error}
                     </div>
                 )}
@@ -64,7 +64,7 @@ export default function LoginForm() {
             </form>
 
             {/* Divisória e Cadastro */}
-            <div className="relative border-t border-[#00ff88]/20 pt-6 mt-2">
+            <div className="relative border-t border-cyber-primary/20 pt-6 mt-2">
                 <p className="text-[10px] text-gray-500 text-center font-mono mb-4">
                     NÃO POSSUI CREDENCIAIS?
                 </p>

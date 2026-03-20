@@ -1,0 +1,94 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model canais {
+  id             Int              @id @default(autoincrement())
+  comunidade_id  Int?
+  nome           String
+  comunidades    comunidades?     @relation(fields: [comunidade_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  mensagens_chat mensagens_chat[]
+}
+
+model comentarios {
+  id           Int        @id @default(autoincrement())
+  postagem_id  Int?
+  autor_id     Int?
+  conteudo     String
+  data_criacao DateTime?  @default(now()) @db.Timestamptz(6)
+  usuarios     usuarios?  @relation(fields: [autor_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  postagens    postagens? @relation(fields: [postagem_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model comunidades {
+  id                 Int                  @id @default(autoincrement())
+  nome               String               @unique
+  descricao          String?
+  dono_id            Int?
+  data_criacao       DateTime?            @default(now()) @db.Timestamptz(6)
+  canais             canais[]
+  usuarios           usuarios?            @relation(fields: [dono_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  membros_comunidade membros_comunidade[]
+}
+
+model curtidas {
+  postagem_id Int
+  usuario_id  Int
+  postagens   postagens @relation(fields: [postagem_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  usuarios    usuarios  @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([postagem_id, usuario_id])
+}
+
+model membros_comunidade {
+  comunidade_id Int
+  usuario_id    Int
+  comunidades   comunidades @relation(fields: [comunidade_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  usuarios      usuarios    @relation(fields: [usuario_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([comunidade_id, usuario_id])
+}
+
+model mensagens_chat {
+  id         Int       @id @default(autoincrement())
+  canal_id   Int?
+  autor_id   Int?
+  conteudo   String
+  data_envio DateTime? @default(now()) @db.Timestamptz(6)
+  usuarios   usuarios? @relation(fields: [autor_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  canais     canais?   @relation(fields: [canal_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model postagens {
+  id           Int           @id @default(autoincrement())
+  autor_id     Int?
+  titulo       String
+  conteudo     String
+  imagem_url   String?
+  data_criacao DateTime?     @default(now()) @db.Timestamptz(6)
+  comentarios  comentarios[]
+  curtidas     curtidas[]
+  usuarios     usuarios?     @relation(fields: [autor_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model usuarios {
+  id                 Int                  @id @default(autoincrement())
+  nome_usuario       String
+  email              String               @unique
+  senha_hash         String
+  role               String?              @default("user")
+  is_admin           Boolean?             @default(false)
+  data_criacao       DateTime?            @default(now()) @db.Timestamptz(6)
+  comentarios        comentarios[]
+  comunidades        comunidades[]
+  curtidas           curtidas[]
+  membros_comunidade membros_comunidade[]
+  mensagens_chat     mensagens_chat[]
+  postagens          postagens[]
+}

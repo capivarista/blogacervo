@@ -1,20 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, ChangeEvent } from 'react';
 import { createPost } from '@/app/actions';
 import { Upload, Send } from 'lucide-react';
+import { toast } from 'sonner';
 
 export default function NewPostForm({ onClose }: { onClose?: () => void }) {
     const [imageB64, setImageB64] = useState('');
     const [fileName, setFileName] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const handleFileChange = (e: any) => {
+    const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+        if (!e.target.files || e.target.files.length === 0) return;
         const file = e.target.files[0];
         if (!file) return;
 
         if (file.size > 2 * 1024 * 1024) {
-            alert('ERRO: Arquivo excede 2MB.');
+            toast.error('ERRO: Arquivo excede 2MB.');
             return;
         }
 
@@ -31,7 +33,12 @@ export default function NewPostForm({ onClose }: { onClose?: () => void }) {
             <form
                 action={async (formData) => {
                     setIsSubmitting(true);
-                    await createPost(formData);
+                    try {
+                        await createPost(formData);
+                        toast.success('Protocolo registrado com sucesso.');
+                    } catch (error) {
+                        toast.error('Falha ao registrar protocolo.');
+                    }
                     setIsSubmitting(false);
                     setImageB64('');
                     setFileName('');
@@ -43,7 +50,7 @@ export default function NewPostForm({ onClose }: { onClose?: () => void }) {
                 <input
                     name="title"
                     placeholder="ASSUNTO..."
-                    className="bg-transparent border-b-2 border-[#004422] focus:border-[#00ff88] text-white font-bold text-2xl px-0 py-3 outline-none w-full placeholder:text-[#004422] transition-colors"
+                    className="w-full px-0 py-3 text-2xl font-bold text-white transition-colors bg-transparent border-b-2 outline-none border-cyber-border-dark focus:border-cyber-primary placeholder:text-cyber-border-dark"
                     required
                     autoComplete="off"
                     autoFocus
@@ -54,14 +61,14 @@ export default function NewPostForm({ onClose }: { onClose?: () => void }) {
                     <textarea
                         name="content"
                         placeholder="Digite o conteúdo do protocolo..."
-                        className="w-full h-full bg-transparent text-[#ccffdd] text-xl resize-none outline-none placeholder:text-[#004422] font-mono leading-relaxed"
+                        className="w-full h-full text-xl font-mono leading-relaxed bg-transparent outline-none resize-none text-cyber-text-primary placeholder:text-cyber-border-dark"
                         required
                     />
                 </div>
 
                 {/* Rodapé */}
-                <div className="flex justify-between items-center pt-6 border-t border-[#00ff88]/20 mt-auto">
-                    <label className="cursor-pointer flex items-center gap-3 text-[#00ff88] hover:text-white transition-colors px-4 py-3 rounded-lg hover:bg-[#00ff88]/10 border border-transparent hover:border-[#00ff88]/30">
+                <div className="flex items-center justify-between pt-6 mt-auto border-t border-cyber-primary/20">
+                    <label className="flex items-center gap-3 px-4 py-3 transition-colors border border-transparent rounded-lg cursor-pointer text-cyber-primary hover:text-white hover:bg-cyber-primary/10 hover:border-cyber-primary/30">
                         <Upload size={22} />
                         <span className="text-sm font-bold tracking-wider">{fileName ? 'ANEXADO' : 'MÍDIA'}</span>
                         <input
@@ -77,7 +84,7 @@ export default function NewPostForm({ onClose }: { onClose?: () => void }) {
                     <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="btn-cyber !py-3 !px-8 !rounded-full hover:scale-105 transition-transform flex items-center gap-3 text-sm shadow-[0_0_20px_rgba(0,255,136,0.3)]"
+                        className="btn-cyber !py-3 !px-8 !rounded-full hover:scale-105 transition-transform flex items-center gap-3 text-sm shadow-cyber-glow-sm"
                     >
                         <span className="font-bold tracking-widest">{isSubmitting ? 'ENVIANDO...' : 'PUBLICAR'}</span>
                         <Send size={18} />

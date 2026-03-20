@@ -1,5 +1,6 @@
 'use server';
 
+export const runtime = 'nodejs'
 
 if (!globalThis.setImmediate) {
     // @ts-ignore
@@ -9,8 +10,36 @@ if (!globalThis.setImmediate) {
 
 import { cookies } from 'next/headers';
 import { revalidatePath } from 'next/cache';
-import { supabase } from '@/lib/supabase';
+import { createServerClient } from '@/lib/supabase-server';
+import prisma from '@/lib/prisma';
 import { hash, compare } from 'bcrypt-ts';
+
+// ==========================================
+// VALIDAÇÃO DE SENHA
+// ==========================================
+
+/**
+ * Valida força da senha com requisitos de segurança:
+ * - Mínimo 8 caracteres
+ * - 1 letra maiúscula
+ * - 1 número
+ * - 1 caractere especial
+ */
+function validatePasswordStrength(password: string): { valid: boolean; error?: string } {
+    if (password.length < 8) {
+        return { valid: false, error: 'Senha deve ter mínimo 8 caracteres' };
+    }
+    if (!/[A-Z]/.test(password)) {
+        return { valid: false, error: 'Senha deve conter letra maiúscula' };
+    }
+    if (!/[0-9]/.test(password)) {
+        return { valid: false, error: 'Senha deve conter número' };
+    }
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+        return { valid: false, error: 'Senha deve conter caractere especial' };
+    }
+    return { valid: true };
+}
 
 // ==========================================
 // AUTENTICAÇÃO
@@ -21,13 +50,13 @@ export async function loginAction(prevState: any, formData: FormData) {
         const email = formData.get('email') as string;
         const password = formData.get('password') as string;
 
-        const { data: user, error } = await supabase
-            .from('usuarios')
-            .select('id, senha_hash')
-            .eq('email', email)
-            .single();
+        // Busca usuário via Prisma
+        const user = await prisma.usuarios.findUnique({
+            where: { email: email.toLowerCase() },
+            select: { id: true, senha_hash: true },
+        });
 
-        if (error || !user) {
+        if (!user) {
             return { error: 'Credenciais inválidas' };
         }
 
@@ -46,7 +75,7 @@ export async function loginAction(prevState: any, formData: FormData) {
 
         return { success: true };
     } catch (e) {
-        console.error('Erro Login:', e);
+        console.error('[LoginAction] Erro:', e);
         return { error: 'Erro interno no servidor' };
     }
 }
@@ -57,22 +86,41 @@ export async function registerAction(prevState: any, formData: FormData) {
         const email = formData.get('email') as string;
         const password = formData.get('password') as string;
 
-        if (!name || !email || !password) return { error: 'Preencha todos os campos' };
+        if (!name || !email || !password) {
+            return { error: 'Preencha todos os campos' };
+        }
+
+        // Validação de força da senha
+        const passwordValidation = validatePasswordStrength(password);
+        if (!passwordValidation.valid) {
+            return { error: passwordValidation.error! };
+        }
+
+        // Verifica se email já existe no Prisma
+        const existingUser = await prisma.usuarios.findUnique({
+            where: { email: email.toLowerCase() },
+        });
+
+        if (existingUser) {
+            return { error: 'Email já cadastrado' };
+        }
 
         const passwordHash = await hash(password, 10);
 
-        const { error } = await supabase
-            .from('usuarios')
-            .insert([{ nome_usuario: name, email, senha_hash: passwordHash, role: 'user' }]);
-
-        if (error) {
-            if (error.code === '23505') return { error: 'Email já cadastrado' };
-            return { error: 'Erro ao salvar no banco' };
-        }
+        // Cria usuário usando Prisma (migration do Supabase → Prisma)
+        await prisma.usuarios.create({
+            data: {
+                nome_usuario: name,
+                email: email.toLowerCase(),
+                senha_hash: passwordHash,
+                role: 'user',
+                is_admin: false,
+            },
+        });
 
         return { success: true };
     } catch (e) {
-        console.error('Erro Registro:', e);
+        console.error('[RegisterAction] Erro:', e);
         return { error: 'Falha no registro' };
     }
 }
@@ -81,112 +129,205 @@ export async function registerAction(prevState: any, formData: FormData) {
 // POSTAGENS
 // ==========================================
 
-export async function getPosts() {
-
+export async function getPosts(page: number = 1, limit: number = 20) {
     const userId = (await cookies()).get('user_id')?.value;
     let userRole = 'user';
 
-
     if (userId) {
-        const { data: u } = await supabase
-            .from('usuarios')
-            .select('role')
-            .eq('id', userId)
-            .single();
-        if (u) userRole = u.role;
+        const user = await prisma.usuarios.findUnique({
+            where: { id: parseInt(userId) },
+            select: { role: true },
+        });
+        if (user?.role) userRole = user.role;
     }
 
-    const { data: posts, error } = await supabase
-        .from('postagens')
-        .select(`
-            *,
-            usuarios!postagens_autor_id_fkey(nome_usuario),
-            curtidas(usuario_id),
-            comentarios(id, conteudo, usuarios(nome_usuario))
-        `)
-        .order('data_criacao', { ascending: false });
+    const offset = (page - 1) * limit;
 
-    if (error) return [];
+    const posts = await prisma.postagens.findMany({
+        take: limit,
+        skip: offset,
+        orderBy: { data_criacao: 'desc' },
+        include: {
+            usuarios: { select: { nome_usuario: true } },
+            curtidas: { select: { usuario_id: true } },
+            comentarios: {
+                include: {
+                    usuarios: { select: { nome_usuario: true } },
+                },
+            },
+        },
+    });
 
-    return (posts || []).map((p: any) => ({
+    return posts.map((p: any) => ({
         ...p,
         nome_usuario: p.usuarios?.nome_usuario || 'Desconhecido',
         likes_count: p.curtidas?.length || 0,
         comentarios: (p.comentarios || []).map((c: any) => ({
             ...c,
-            nome_usuario: c.usuarios?.nome_usuario || 'Anônimo'
+            nome_usuario: c.usuarios?.nome_usuario || 'Anônimo',
         })),
-        // LÓGICA DO BOTÃO DEL: Aparece se for ADMIN ou se for o DONO do post
-        current_user_is_admin: (userRole === 'admin') || (userId && p.autor_id == userId)
+        current_user_is_admin: (userRole === 'admin') || (userId && p.autor_id == parseInt(userId)),
     }));
+}
+
+/**
+ * Valida buffer de imagem verificando magic bytes (PNG, JPEG, GIF, WebP)
+ * Previne upload de arquivos maliciosos com extensão enganosa
+ */
+function validateImageBuffer(buffer: Buffer): boolean {
+    const signatures = [
+        [0x89, 0x50, 0x4E, 0x47],           // PNG
+        [0xFF, 0xD8, 0xFF],                 // JPEG
+        [0x47, 0x49, 0x46, 0x38],           // GIF
+        [0x52, 0x49, 0x46, 0x46],           // WebP (RIFF)
+    ];
+
+    for (const sig of signatures) {
+        if (sig.every((byte, i) => buffer[i] === byte)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 export async function createPost(formData: FormData) {
     const userId = (await cookies()).get('user_id')?.value;
-    if (!userId) return;
+    if (!userId) return { error: 'Não autorizado' };
 
     const titulo = formData.get('title') as string;
     const conteudo = formData.get('content') as string;
-    const imageBase64 = formData.get('image') as string;
 
     let imageUrl = null;
 
-    if (imageBase64 && imageBase64.startsWith('data:image')) {
-        try {
-            const base64Data = imageBase64.split(',')[1];
-            const buffer = Buffer.from(base64Data, 'base64');
-            const fileName = `${userId}-${Date.now()}.png`;
+    const imageFile = formData.get('image') as File | null;
+    const imageBase64 = formData.get('image') as string | null;
 
+    // 1. PROCESSA COMO ARQUIVO NATIVO
+    if (imageFile && typeof imageFile === 'object' && imageFile.size > 0) {
+        // Validação de tamanho (max 2MB)
+        if (imageFile.size > 2 * 1024 * 1024) {
+            return { error: 'Imagem muito grande (max 2MB)' };
+        }
+
+        try {
+            const arrayBuffer = await imageFile.arrayBuffer();
+            const buffer = Buffer.from(arrayBuffer);
+
+            // VALIDAÇÃO DE MIME TYPE REAL (magic bytes)
+            if (!validateImageBuffer(buffer)) {
+                return { error: 'Formato de arquivo inválido. Apenas PNG, JPEG, GIF e WebP são aceitos.' };
+            }
+
+            const fileExt = imageFile.name.split('.').pop() || 'png';
+            const fileName = `user-${userId}-${Date.now()}.${fileExt}`;
+
+            const supabase = createServerClient();
             const { error: uploadError } = await supabase.storage
                 .from('post-images')
                 .upload(fileName, buffer, {
-                    contentType: 'image/png',
-                    upsert: true
+                    contentType: imageFile.type,
+                    upsert: false
                 });
 
-            if (!uploadError) {
+            if (uploadError) {
+                console.error("[CreatePost] Upload Error:", uploadError);
+                return { error: 'Falha ao upload da imagem' };
+            }
+
+            const { data: urlData } = supabase.storage
+                .from('post-images')
+                .getPublicUrl(fileName);
+            imageUrl = urlData.publicUrl;
+
+        } catch (e) {
+            console.error('[CreatePost] Erro crítico ao ler o File:', e);
+            return { error: 'Erro ao processar imagem' };
+        }
+    }
+    // 2. FALLBACK: PROCESSA COMO BASE64
+    else if (typeof imageBase64 === 'string' && imageBase64.startsWith('data:image')) {
+        try {
+            const matches = imageBase64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+            if (matches && matches.length === 3) {
+                const mimeType = matches[1];
+                const base64Data = matches[2];
+                const buffer = Buffer.from(base64Data, 'base64');
+
+                // VALIDAÇÃO DE MIME TYPE REAL
+                if (!validateImageBuffer(buffer)) {
+                    return { error: 'Formato de arquivo inválido' };
+                }
+
+                const fileExt = mimeType.split('/')[1] || 'png';
+                const fileName = `user-${userId}-${Date.now()}.${fileExt}`;
+
+                const supabase = createServerClient();
+                const { error: uploadError } = await supabase.storage
+                    .from('post-images')
+                    .upload(fileName, buffer, {
+                        contentType: mimeType,
+                        upsert: false
+                    });
+
+                if (uploadError) {
+                    console.error("[CreatePost] Upload Error (Base64):", uploadError);
+                    return { error: 'Falha ao upload da imagem' };
+                }
+
                 const { data: urlData } = supabase.storage
                     .from('post-images')
                     .getPublicUrl(fileName);
                 imageUrl = urlData.publicUrl;
             }
         } catch (e) {
-            console.error('Erro upload imagem:', e);
+            console.error('[CreatePost] Erro ao processar imagem Base64:', e);
+            return { error: 'Erro ao processar imagem' };
         }
     }
 
-    await supabase.from('postagens').insert([{
-        autor_id: parseInt(userId),
-        titulo,
-        conteudo,
-        imagem_url: imageUrl
-    }]);
+    // 3. SALVA NO BANCO DE DADOS (Prisma)
+    await prisma.postagens.create({
+        data: {
+            autor_id: parseInt(userId),
+            titulo,
+            conteudo,
+            imagem_url: imageUrl,
+        },
+    });
 
     revalidatePath('/');
+    return { success: true };
 }
 
 export async function deletePost(postId: number) {
     const userId = (await cookies()).get('user_id')?.value;
-    if (!userId) return;
+    if (!userId) return { error: 'Não autorizado' };
 
-
-    const { data: user } = await supabase
-        .from('usuarios')
-        .select('role')
-        .eq('id', userId)
-        .single();
+    const user = await prisma.usuarios.findUnique({
+        where: { id: parseInt(userId) },
+        select: { role: true },
+    });
 
     const isAdmin = user?.role === 'admin';
 
-    const query = supabase.from('postagens').delete().eq('id', postId);
+    if (isAdmin) {
+        await prisma.postagens.delete({ where: { id: postId } });
+    } else {
+        // Verifica se o usuário é o autor do post
+        const post = await prisma.postagens.findUnique({
+            where: { id: postId },
+            select: { autor_id: true },
+        });
 
+        if (!post || post.autor_id != parseInt(userId)) {
+            return { error: 'Acesso negado' };
+        }
 
-    if (!isAdmin) {
-        query.eq('autor_id', userId);
+        await prisma.postagens.delete({ where: { id: postId } });
     }
 
-    await query;
     revalidatePath('/');
+    return { success: true };
 }
 
 // ==========================================
@@ -195,21 +336,30 @@ export async function deletePost(postId: number) {
 
 export async function likePost(postId: number) {
     const userId = (await cookies()).get('user_id')?.value;
-    if (!userId) return;
+    if (!userId) return { error: 'Não autorizado' };
 
-    const { data: existing } = await supabase
-        .from('curtidas')
-        .select('*')
-        .eq('postagem_id', postId)
-        .eq('usuario_id', userId)
-        .single();
+    const existing = await prisma.curtidas.findFirst({
+        where: {
+            postagem_id: postId,
+            usuario_id: parseInt(userId),
+        },
+    });
 
     if (existing) {
-        await supabase.from('curtidas').delete().eq('postagem_id', postId).eq('usuario_id', userId);
+        await prisma.curtidas.delete({
+            where: { id: existing.id },
+        });
     } else {
-        await supabase.from('curtidas').insert([{ postagem_id: postId, usuario_id: parseInt(userId) }]);
+        await prisma.curtidas.create({
+            data: {
+                postagem_id: postId,
+                usuario_id: parseInt(userId),
+            },
+        });
     }
+
     revalidatePath('/');
+    return { success: true };
 }
 
 
@@ -218,25 +368,28 @@ export async function createComment(formData: FormData) {
     const content = formData.get('content') as string;
     const postId = formData.get('postId') as string;
 
+    if (!userId) {
+        return { error: 'Não autorizado' };
+    }
 
-    if (!userId) return;
     if (!content || content.trim().length === 0) {
-
-        return { error: "O comentário não pode estar vazio." };
+        return { error: 'O comentário não pode estar vazio' };
     }
+
     if (content.length > 500) {
-        return { error: "Comentário muito longo (max 500 caracteres)." };
+        return { error: 'Comentário muito longo (max 500 caracteres)' };
     }
 
-
-
-    await supabase.from('comentarios').insert([{
-        postagem_id: parseInt(postId),
-        autor_id: parseInt(userId),
-        conteudo: content.trim() // Remove espaços extras
-    }]);
+    await prisma.comentarios.create({
+        data: {
+            postagem_id: parseInt(postId),
+            autor_id: parseInt(userId),
+            conteudo: content.trim(),
+        },
+    });
 
     revalidatePath('/');
+    return { success: true };
 }
 
 // ==========================================
@@ -251,104 +404,178 @@ export async function createCommunity(formData: FormData) {
     const descricao = formData.get('descricao') as string;
 
     try {
-        const { data: community, error: cError } = await supabase
-            .from('comunidades')
-            .insert([{ nome, descricao, dono_id: parseInt(userId) }])
-            .select()
-            .single();
+        const community = await prisma.comunidades.create({
+            data: {
+                nome,
+                descricao,
+                dono_id: parseInt(userId),
+            },
+        });
 
-        if (cError) throw cError;
+        await prisma.membros_comunidade.create({
+            data: {
+                comunidade_id: community.id,
+                usuario_id: parseInt(userId),
+            },
+        });
 
-        await supabase.from('membros_comunidade').insert([{ comunidade_id: community.id, usuario_id: parseInt(userId) }]);
-        await supabase.from('canais').insert([{ community_id: community.id, nome: 'geral' }]);
+        await prisma.canais.create({
+            data: {
+                community_id: community.id,
+                nome: 'geral',
+            },
+        });
 
         revalidatePath('/communities');
         return { success: true };
     } catch (e) {
-        return { error: 'Erro ao criar comunidade.' };
+        console.error('[CreateCommunity] Erro:', e);
+        return { error: 'Erro ao criar comunidade' };
     }
 }
 
 export async function getCommunityData() {
     const userId = (await cookies()).get('user_id')?.value;
 
-    const { data: all } = await supabase.from('comunidades').select('*, membros_comunidade(usuario_id)');
+    if (!userId) {
+        return { allCommunities: [], myCommunities: [] };
+    }
 
-    const allProcessed = (all || []).map((c: any) => ({
+    const all = await prisma.comunidades.findMany({
+        include: {
+            membros_comunidade: { select: { usuario_id: true } },
+        },
+    });
+
+    const allProcessed = all.map((c: any) => ({
         ...c,
         membros_count: c.membros_comunidade?.length || 0,
-        is_member: userId ? c.membros_comunidade?.some((m: any) => m.usuario_id == userId) : false
+        is_member: c.membros_comunidade?.some((m: any) => m.usuario_id == parseInt(userId)),
     }));
 
     return {
         allCommunities: allProcessed,
-        myCommunities: allProcessed.filter((c: any) => c.is_member)
+        myCommunities: allProcessed.filter((c: any) => c.is_member),
     };
 }
 
 export async function joinCommunity(comunidadeId: number) {
     const userId = (await cookies()).get('user_id')?.value;
-    if (!userId) return;
-    await supabase.from('membros_comunidade').insert([{ comunidade_id: comunidadeId, usuario_id: parseInt(userId) }]);
+    if (!userId) return { error: 'Não autorizado' };
+
+    await prisma.membros_comunidade.create({
+        data: {
+            comunidade_id: comunidadeId,
+            usuario_id: parseInt(userId),
+        },
+    });
+
     revalidatePath('/communities');
+    return { success: true };
 }
 
 export async function leaveCommunity(comunidadeId: number) {
     const userId = (await cookies()).get('user_id')?.value;
-    if (!userId) return;
-    await supabase.from('membros_comunidade').delete().eq('comunidade_id', comunidadeId).eq('usuario_id', userId);
+    if (!userId) return { error: 'Não autorizado' };
+
+    await prisma.membros_comunidade.deleteMany({
+        where: {
+            comunidade_id: comunidadeId,
+            usuario_id: parseInt(userId),
+        },
+    });
+
     revalidatePath('/communities');
+    return { success: true };
 }
 
 export async function getCommunityChatData(communityId: number) {
     const userId = (await cookies()).get('user_id')?.value;
     if (!userId) return null;
 
-    const { data: community } = await supabase.from('comunidades').select('*').eq('id', communityId).single();
-    const { data: channels } = await supabase.from('canais').select('*').eq('community_id', communityId);
-    const { data: members } = await supabase.from('membros_comunidade').select('usuarios(id, nome_usuario)').eq('comunidade_id', communityId);
+    const community = await prisma.comunidades.findUnique({
+        where: { id: communityId },
+    });
+
+    const channels = await prisma.canais.findMany({
+        where: { community_id: communityId },
+    });
+
+    const members = await prisma.membros_comunidade.findMany({
+        where: { comunidade_id: communityId },
+        include: { usuarios: { select: { id: true, nome_usuario: true } } },
+    });
 
     return {
         community,
         channels: channels || [],
         members: (members || []).map((m: any) => ({
             ...m.usuarios,
-            is_owner: m.usuarios.id == community?.dono_id
+            is_owner: m.usuarios.id == community?.dono_id,
         })),
-        currentUser: { id: parseInt(userId), isOwner: community?.dono_id == userId }
+        currentUser: { id: parseInt(userId), isOwner: community?.dono_id == parseInt(userId) },
     };
 }
 
 export async function getChannelMessages(channelId: number) {
-    const { data } = await supabase
-        .from('mensagens_chat')
-        .select('*, usuarios(nome_usuario)')
-        .eq('canal_id', channelId)
-        .order('data_envio', { ascending: true });
+    const messages = await prisma.mensagens_chat.findMany({
+        where: { canal_id: channelId },
+        include: { usuarios: { select: { nome_usuario: true } } },
+        orderBy: { data_envio: 'asc' },
+    });
 
-    return (data || []).map((m: any) => ({ ...m, nome_usuario: m.usuarios?.nome_usuario }));
+    return messages.map((m: any) => ({ ...m, nome_usuario: m.usuarios?.nome_usuario }));
 }
 
 export async function sendMessage(channelId: number, content: string) {
     const userId = (await cookies()).get('user_id')?.value;
-    if (!userId) return;
-    await supabase.from('mensagens_chat').insert([{ canal_id: channelId, autor_id: parseInt(userId), conteudo: content }]);
+    if (!userId) return { error: 'Não autorizado' };
+
+    await prisma.mensagens_chat.create({
+        data: {
+            canal_id: channelId,
+            autor_id: parseInt(userId),
+            conteudo: content,
+        },
+    });
+
+    return { success: true };
 }
 
 export async function createChannel(communityId: number, channelName: string) {
     const userId = (await cookies()).get('user_id')?.value;
-    const { data: community } = await supabase.from('comunidades').select('dono_id').eq('id', communityId).single();
-    if (community?.dono_id != userId) return { error: 'Sem permissão' };
+    if (!userId) return { error: 'Não autorizado' };
 
-    await supabase.from('canais').insert([{
-        community_id: communityId,
-        nome: channelName.toLowerCase().replace(/\s/g, '-')
-    }]);
+    const community = await prisma.comunidades.findUnique({
+        where: { id: communityId },
+        select: { dono_id: true },
+    });
+
+    if (community?.dono_id != parseInt(userId)) {
+        return { error: 'Sem permissão' };
+    }
+
+    await prisma.canais.create({
+        data: {
+            community_id: communityId,
+            nome: channelName.toLowerCase().replace(/\s/g, '-'),
+        },
+    });
+
     revalidatePath(`/communities/${communityId}/chat`);
+    return { success: true };
 }
 
 export async function deleteMessage(messageId: number, communityId: number) {
     const userId = (await cookies()).get('user_id')?.value;
-    if (!userId) return;
-    await supabase.from('mensagens_chat').delete().eq('id', messageId).eq('autor_id', userId);
+    if (!userId) return { error: 'Não autorizado' };
+
+    await prisma.mensagens_chat.deleteMany({
+        where: {
+            id: messageId,
+            autor_id: parseInt(userId),
+        },
+    });
+
+    return { success: true };
 }

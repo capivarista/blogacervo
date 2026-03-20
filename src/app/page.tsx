@@ -4,6 +4,7 @@ import CreatePostWrapper from '@/components/CreatePostWrapper';
 import Header from '@/components/Header';
 import { cookies } from 'next/headers';
 import LoginForm from '@/components/LoginForm';
+import { Post } from '@/types';
 import { Activity } from 'lucide-react';
 
 export const runtime = 'edge';
@@ -34,7 +35,7 @@ export default async function Page() {
             {/* Feed */}
             <div className="pt-6 pb-32 px-4 md:px-8 max-w-4xl mx-auto relative z-10">
                 <div className="space-y-8">
-                    {posts.map((post: any) => (
+                    {posts.map((post: Post) => (
                         <PostCard key={post.id} post={post} />
                     ))}
 

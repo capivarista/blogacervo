@@ -12,7 +12,7 @@ export default function RegisterForm() {
         <div className="glass-panel w-full p-8 flex flex-col gap-6 relative overflow-hidden">
 
             <div className="flex flex-col items-center gap-4">
-                <h1 className="text-xl font-bold text-[#00ff88] tracking-[0.2em] uppercase">
+                <h1 className="text-xl font-bold text-cyber-primary tracking-[0.2em] uppercase">
                     REGISTRO
                 </h1>
                 <p className="text-[10px] text-gray-500 font-mono uppercase tracking-widest">
@@ -22,8 +22,8 @@ export default function RegisterForm() {
 
             {state?.success ? (
                 <div className="text-center py-8 flex flex-col items-center gap-4 animate-in fade-in zoom-in">
-                    <div className="bg-[#00ff88]/10 border border-[#00ff88] p-4 rounded-full">
-                        <UserPlus className="text-[#00ff88]" size={32} />
+                    <div className="bg-cyber-primary/10 border border-cyber-primary p-4 rounded-full">
+                        <UserPlus className="text-cyber-primary" size={32} />
                     </div>
                     <p className="text-white font-bold tracking-widest text-sm">ACESSO CONCEDIDO</p>
                     <Link
@@ -44,7 +44,7 @@ export default function RegisterForm() {
 
                     <div className="space-y-4">
                         <div className="relative">
-                            <User className="absolute left-3 top-3 text-[#00ff88]/40" size={18} />
+                            <User className="absolute left-3 top-3 text-cyber-primary/40" size={18} />
                             <input
                                 name="name"
                                 placeholder="CODENAME"
@@ -55,7 +55,7 @@ export default function RegisterForm() {
                         </div>
 
                         <div className="relative">
-                            <Mail className="absolute left-3 top-3 text-[#00ff88]/40" size={18} />
+                            <Mail className="absolute left-3 top-3 text-cyber-primary/40" size={18} />
                             <input
                                 name="email"
                                 type="email"
@@ -66,7 +66,7 @@ export default function RegisterForm() {
                         </div>
 
                         <div className="relative">
-                            <Lock className="absolute left-3 top-3 text-[#00ff88]/40" size={18} />
+                            <Lock className="absolute left-3 top-3 text-cyber-primary/40" size={18} />
                             <input
                                 name="password"
                                 type="password"
@@ -75,6 +75,13 @@ export default function RegisterForm() {
                                 required
                             />
                         </div>
+
+                        <ul className="text-[9px] text-gray-500 font-mono mt-1 space-y-0.5 ml-1">
+                            <li>• Mínimo 8 caracteres</li>
+                            <li>• 1 letra maiúscula</li>
+                            <li>• 1 número</li>
+                            <li>• 1 caractere especial</li>
+                        </ul>
                     </div>
 
                     <button
@@ -85,7 +92,7 @@ export default function RegisterForm() {
                         {isPending ? 'PROCESSANDO...' : 'REGISTRAR'}
                     </button>
 
-                    <div className="relative border-t border-[#00ff88]/20 pt-6 mt-2">
+                    <div className="relative border-t border-cyber-primary/20 pt-6 mt-2">
                         <Link
                             href="/"
                             className="btn-cyber w-full opacity-80 hover:opacity-100"
