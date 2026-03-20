@@ -50,7 +50,7 @@ export default function NewPostForm({ onClose }: { onClose?: () => void }) {
                 <input
                     name="title"
                     placeholder="ASSUNTO..."
-                    className="w-full px-0 py-3 text-2xl font-bold text-white transition-colors bg-transparent border-b-2 outline-none border-cyber-border-dark focus:border-cyber-primary placeholder:text-cyber-border-dark"
+                    className="w-full px-4 py-3 text-2xl font-bold text-white transition-colors bg-[#00ff88]/5 border-b-2 outline-none border-cyber-border-dark focus:border-cyber-primary placeholder:text-gray-600"
                     required
                     autoComplete="off"
                     autoFocus
@@ -61,7 +61,7 @@ export default function NewPostForm({ onClose }: { onClose?: () => void }) {
                     <textarea
                         name="content"
                         placeholder="Digite o conteúdo do protocolo..."
-                        className="w-full h-full text-xl font-mono leading-relaxed bg-transparent outline-none resize-none text-cyber-text-primary placeholder:text-cyber-border-dark"
+                        className="w-full h-full text-xl font-mono leading-relaxed bg-[#00ff88]/5 outline-none resize-none text-white placeholder:text-gray-600"
                         required
                     />
                 </div>

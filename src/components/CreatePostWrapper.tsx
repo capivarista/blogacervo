@@ -56,24 +56,24 @@ export default function CreatePostWrapper() {
 
                             <button
                                 onClick={() => setIsMenuOpen(false)}
-                                className="group flex w-full items-center border-b border-[#00ff88]/20 bg-transparent text-left text-[#00ff88] transition-colors duration-150 hover:bg-[#00ff88] hover:text-black active:bg-[#00ff88]/80"
+                                className="group flex w-full items-center border-b border-[#00ff88]/20 bg-transparent text-left text-[#00ff88] transition-all duration-200 hover:bg-[#00ff88]/15 hover:border-[#00ff88]/40 active:bg-[#00ff88]/25"
                             >
-                                <span className="flex h-12 w-12 shrink-0 items-center justify-center border-r border-[#00ff88]/30 transition-colors group-hover:border-black/20">
-                                    <Search size={16} className="transition-transform duration-150 group-hover:scale-110" />
+                                <span className="flex h-12 w-12 shrink-0 items-center justify-center border-r border-[#00ff88]/30 transition-all group-hover:border-[#00ff88]/50 group-hover:shadow-[0_0_10px_rgba(0,255,136,0.3)]">
+                                    <Search size={16} className="transition-transform duration-200 group-hover:scale-110 group-hover:text-[#00ff88]" />
                                 </span>
-                                <span className="flex-1 px-4 font-mono text-[11px] font-bold uppercase tracking-[0.2em]">
+                                <span className="flex-1 px-4 font-mono text-[11px] font-bold uppercase tracking-[0.2em] group-hover:text-white">
                                     Pesquisa
                                 </span>
                             </button>
 
                             <button
                                 onClick={() => setIsMenuOpen(false)}
-                                className="group flex w-full items-center border-b border-[#00ff88]/20 bg-transparent text-left text-[#00ff88] transition-colors duration-150 hover:bg-[#00ff88] hover:text-black active:bg-[#00ff88]/80"
+                                className="group flex w-full items-center border-b border-[#00ff88]/20 bg-transparent text-left text-[#00ff88] transition-all duration-200 hover:bg-[#00ff88]/15 hover:border-[#00ff88]/40 active:bg-[#00ff88]/25"
                             >
-                                <span className="flex h-12 w-12 shrink-0 items-center justify-center border-r border-[#00ff88]/30 transition-colors group-hover:border-black/20">
-                                    <Filter size={16} className="transition-transform duration-150 group-hover:scale-110" />
+                                <span className="flex h-12 w-12 shrink-0 items-center justify-center border-r border-[#00ff88]/30 transition-all group-hover:border-[#00ff88]/50 group-hover:shadow-[0_0_10px_rgba(0,255,136,0.3)]">
+                                    <Filter size={16} className="transition-transform duration-200 group-hover:scale-110 group-hover:text-[#00ff88]" />
                                 </span>
-                                <span className="flex-1 px-4 font-mono text-[11px] font-bold uppercase tracking-[0.2em]">
+                                <span className="flex-1 px-4 font-mono text-[11px] font-bold uppercase tracking-[0.2em] group-hover:text-white">
                                     Filtro
                                 </span>
                             </button>
@@ -81,12 +81,12 @@ export default function CreatePostWrapper() {
                             <Link
                                 href="/communities"
                                 onClick={() => setIsMenuOpen(false)}
-                                className="group flex items-center border-b border-[#00ff88]/20 bg-transparent text-[#00ff88] transition-colors duration-150 hover:bg-[#00ff88] hover:text-black active:bg-[#00ff88]/80"
+                                className="group flex items-center border-b border-[#00ff88]/20 bg-transparent text-[#00ff88] transition-all duration-200 hover:bg-[#00ff88]/15 hover:border-[#00ff88]/40 active:bg-[#00ff88]/25"
                             >
-                                <span className="flex h-12 w-12 shrink-0 items-center justify-center border-r border-[#00ff88]/30 transition-colors group-hover:border-black/20">
-                                    <Users size={16} className="transition-transform duration-150 group-hover:scale-110" />
+                                <span className="flex h-12 w-12 shrink-0 items-center justify-center border-r border-[#00ff88]/30 transition-all group-hover:border-[#00ff88]/50 group-hover:shadow-[0_0_10px_rgba(0,255,136,0.3)]">
+                                    <Users size={16} className="transition-transform duration-200 group-hover:scale-110 group-hover:text-[#00ff88]" />
                                 </span>
-                                <span className="flex-1 px-4 font-mono text-[11px] font-bold uppercase tracking-[0.2em]">
+                                <span className="flex-1 px-4 font-mono text-[11px] font-bold uppercase tracking-[0.2em] group-hover:text-white">
                                     Comunidade
                                 </span>
                             </Link>
@@ -94,12 +94,12 @@ export default function CreatePostWrapper() {
                             <Link
                                 href="/profile"
                                 onClick={() => setIsMenuOpen(false)}
-                                className="group flex items-center bg-transparent text-[#00ff88] transition-colors duration-150 hover:bg-[#00ff88] hover:text-black active:bg-[#00ff88]/80"
+                                className="group flex items-center bg-transparent text-[#00ff88] transition-all duration-200 hover:bg-[#00ff88]/15 hover:border-[#00ff88]/40 active:bg-[#00ff88]/25"
                             >
-                                <span className="flex h-12 w-12 shrink-0 items-center justify-center border-r border-[#00ff88]/30 transition-colors group-hover:border-black/20">
-                                    <User size={16} className="transition-transform duration-150 group-hover:scale-110" />
+                                <span className="flex h-12 w-12 shrink-0 items-center justify-center border-r border-[#00ff88]/30 transition-all group-hover:border-[#00ff88]/50 group-hover:shadow-[0_0_10px_rgba(0,255,136,0.3)]">
+                                    <User size={16} className="transition-transform duration-200 group-hover:scale-110 group-hover:text-[#00ff88]" />
                                 </span>
-                                <span className="flex-1 px-4 font-mono text-[11px] font-bold uppercase tracking-[0.2em]">
+                                <span className="flex-1 px-4 font-mono text-[11px] font-bold uppercase tracking-[0.2em] group-hover:text-white">
                                     Perfil
                                 </span>
                             </Link>

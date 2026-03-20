@@ -3,20 +3,44 @@ import ChatInterface from '@/components/ChatInterface';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 
-
-
 export const metadata = {
     title: "CHAT // BLOG.ACERVOBOOK",
 };
 
+interface ChatMember {
+    id: number;
+    nome_usuario: string;
+    is_owner: boolean;
+}
 
-export default async function ChatPage({ params }: { params: Promise<{ id: string }> }) {
+interface Channel {
+    id: number;
+    nome: string;
+}
 
+interface Community {
+    id: number;
+    nome: string;
+    descricao: string | null;
+    dono_id: number;
+    data_criacao: Date;
+}
 
+interface ChatPageData {
+    community: Community | null;
+    channels: Channel[];
+    members: ChatMember[];
+    currentUser: { id: number; isOwner: boolean };
+}
+
+interface PageProps {
+    params: Promise<{ id: string }>;
+}
+
+export default async function ChatPage({ params }: PageProps) {
     const { id } = await params;
 
-
-    const data = await getCommunityChatData(parseInt(id));
+    const data = await getCommunityChatData(parseInt(id)) as ChatPageData | null;
 
     if (!data) {
         return (
@@ -38,7 +62,7 @@ export default async function ChatPage({ params }: { params: Promise<{ id: strin
                     <ArrowLeft />
                 </Link>
                 <h1 className="text-xl font-bold text-white tracking-widest">
-                    ACERVO // CHAT // <span className="text-[#00ff88]">{data.comunidade.nome.toUpperCase()}</span>
+                    ACERVO // CHAT // <span className="text-[#00ff88]">{data.community?.nome.toUpperCase()}</span>
                 </h1>
             </header>
 

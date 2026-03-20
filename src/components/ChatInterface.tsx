@@ -5,6 +5,7 @@ import { Send, Hash, Trash2, Plus, User, ShieldAlert } from 'lucide-react';
 import { getChannelMessages, sendMessage, createChannel, deleteMessage } from '@/app/actions';
 import { ChatMessage, Channel } from '@/types';
 import { createClient } from '@/lib/supabase-client';
+import { toast } from 'sonner';
 const supabase = createClient();
 
 // Defining props based on what is actually passed from the server
@@ -155,21 +156,29 @@ export default function ChatInterface({ communityId, initialData }: ChatProps) {
         const msgToSend = newMessage;
         setNewMessage('');
 
-        await sendMessage(activeChannel, msgToSend);
+        const result = await sendMessage(activeChannel, msgToSend);
         
-        // Refresh to ensure synchronization and get real IDs
-        const updatedRaw = await getChannelMessages(activeChannel);
-        const updatedMapped: ChatMessage[] = updatedRaw.map((m: any) => ({
-            id: m.id,
-            channel_id: m.canal_id,
-            user_id: String(m.autor_id),
-            content: m.conteudo,
-            created_at: m.data_envio,
-            updated_at: null,
-            user_name: m.nome_usuario || 'Desconhecido',
-            user_avatar_url: null
-        }));
-        setMessages(updatedMapped);
+        if (result?.error) {
+            toast.error(result.error);
+            // Revert optimistic update on error
+            setMessages(prev => prev.filter(m => m.id !== tempId));
+            setNewMessage(msgToSend);
+        } else if (result?.success) {
+            toast.success('Sinal transmitido');
+            // Refresh to ensure synchronization and get real IDs
+            const updatedRaw = await getChannelMessages(activeChannel);
+            const updatedMapped: ChatMessage[] = updatedRaw.map((m: any) => ({
+                id: m.id,
+                channel_id: m.canal_id,
+                user_id: String(m.autor_id),
+                content: m.conteudo,
+                created_at: m.data_envio,
+                updated_at: null,
+                user_name: m.nome_usuario || 'Desconhecido',
+                user_avatar_url: null
+            }));
+            setMessages(updatedMapped);
+        }
         setLoadingMsg(false);
     };
 
@@ -177,7 +186,25 @@ export default function ChatInterface({ communityId, initialData }: ChatProps) {
         if(confirm('Apagar esta mensagem?')) {
             // Optimistic Delete
             setMessages(prev => prev.filter(m => m.id !== msgId));
-            await deleteMessage(msgId, communityId);
+            const result = await deleteMessage(msgId, communityId);
+            if (result?.error) {
+                toast.error(result.error);
+                // Revert optimistic delete on error
+                const updatedRaw = await getChannelMessages(activeChannel!);
+                const updatedMapped: ChatMessage[] = updatedRaw.map((m: any) => ({
+                    id: m.id,
+                    channel_id: m.canal_id,
+                    user_id: String(m.autor_id),
+                    content: m.conteudo,
+                    created_at: m.data_envio,
+                    updated_at: null,
+                    user_name: m.nome_usuario || 'Desconhecido',
+                    user_avatar_url: null
+                }));
+                setMessages(updatedMapped);
+            } else if (result?.success) {
+                toast.success('Mensagem apagada do registro');
+            }
         }
     };
 
@@ -214,9 +241,14 @@ export default function ChatInterface({ communityId, initialData }: ChatProps) {
                             <form action={async (formData) => {
                                 const name = formData.get('name') as string;
                                 if(name) {
-                                    await createChannel(communityId, name);
-                                    setShowNewChannelForm(false);
-                                    window.location.reload();
+                                    const result = await createChannel(communityId, name);
+                                    if (result?.error) {
+                                        toast.error(result.error);
+                                    } else if (result?.success) {
+                                        toast.success('Canal estabelecido');
+                                        setShowNewChannelForm(false);
+                                        window.location.reload();
+                                    }
                                 }
                             }} className="flex gap-1">
                                 <input name="name" className="cyber-field !py-1 !px-2 text-xs" placeholder="nome-canal" autoFocus />
@@ -276,8 +308,8 @@ export default function ChatInterface({ communityId, initialData }: ChatProps) {
                                         
                                         <div className={`relative px-4 py-2 rounded border transition-colors ${
                                             isMe 
-                                                ? 'bg-[#00ff88]/10 border-[#00ff88]/30 text-gray-100' 
-                                                : 'bg-[#000a04]/80 border-[#00ff88]/10 text-gray-300'
+                                                ? 'bg-[#002211]/80 border-[#00ff88]/30 text-gray-100' 
+                                                : 'bg-[#001a0a]/80 border-[#00ff88]/20 text-gray-300'
                                         }`}>
                                             <p className="text-sm font-mono break-all whitespace-pre-wrap">
                                                 {msg.content}

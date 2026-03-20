@@ -3,11 +3,19 @@ import CommunityInterface from '@/components/CommunityInterface';
 import { Network } from 'lucide-react';
 import Link from 'next/link';
 
-
-
 export const metadata = {
     title: "COMMUNITIES // BLOG.ACERVOBOOK",
 };
+
+interface CommunityData {
+    id: number;
+    nome: string;
+    descricao: string | null;
+    dono_id: number;
+    data_criacao: Date;
+    membros_count: number;
+    is_member: boolean;
+}
 
 export default async function CommunitiesPage() {
     const { allCommunities, myCommunities } = await getCommunityData();
@@ -34,7 +42,7 @@ export default async function CommunitiesPage() {
                 </header>
 
 
-                <CommunityInterface allData={allCommunities} myData={myCommunities} />
+                <CommunityInterface allData={allCommunities as CommunityData[]} myData={myCommunities as CommunityData[]} />
             </div>
         </main>
     );

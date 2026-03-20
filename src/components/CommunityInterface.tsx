@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Search, Users, Plus, Shield, LogOut, LogIn, MessageSquare } from 'lucide-react';
 import { createCommunity, joinCommunity, leaveCommunity } from '@/app/actions';
+import { toast } from 'sonner';
 import Link from 'next/link';
 
 export default function CommunityInterface({ allData, myData }: { allData: any[], myData: any[] }) {
@@ -64,8 +65,13 @@ export default function CommunityInterface({ allData, myData }: { allData: any[]
                 <div className="glass-panel mb-8 border-l-4 border-l-[#00ff88] animate-in slide-in-from-top-4">
                     <h3 className="text-[#00ff88] font-bold mb-4">INICIAR NOVO PROTOCOLO DE GRUPO</h3>
                     <form action={async (formData) => {
-                        await createCommunity(formData);
-                        setShowCreateForm(false);
+                        const result = await createCommunity(formData);
+                        if (result?.error) {
+                            toast.error(result.error);
+                        } else if (result?.success) {
+                            toast.success('Clã fundado com sucesso');
+                            setShowCreateForm(false);
+                        }
                     }} className="flex flex-col gap-4">
                         <input name="nome" placeholder="NOME DO CLÃ (ÚNICO)" className="cyber-field" required maxLength={30} />
                         <textarea name="descricao" placeholder="DIRETRIZES E OBJETIVOS..." className="cyber-field h-24" required />
@@ -107,7 +113,14 @@ export default function CommunityInterface({ allData, myData }: { allData: any[]
                                     </Link>
 
                                     <button
-                                        onClick={() => leaveCommunity(com.id)}
+                                        onClick={async () => {
+                                            const result = await leaveCommunity(com.id);
+                                            if (result?.error) {
+                                                toast.error(result.error);
+                                            } else if (result?.success) {
+                                                toast.success('Protocolo de saída executado');
+                                            }
+                                        }}
                                         className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1 px-3 py-1 hover:bg-red-900/20 rounded transition-all border border-transparent hover:border-red-900/30"
                                     >
                                         <LogOut size={12} /> SAIR
@@ -115,7 +128,14 @@ export default function CommunityInterface({ allData, myData }: { allData: any[]
                                 </>
                             ) : (
                                 <button
-                                    onClick={() => joinCommunity(com.id)}
+                                    onClick={async () => {
+                                        const result = await joinCommunity(com.id);
+                                        if (result?.error) {
+                                            toast.error(result.error);
+                                        } else if (result?.success) {
+                                            toast.success('Conexão estabelecida com o clã');
+                                        }
+                                    }}
                                     className="text-xs bg-[#00ff88]/10 text-[#00ff88] hover:bg-[#00ff88] hover:text-black border border-[#00ff88]/50 flex items-center gap-2 px-4 py-1 rounded transition-all font-bold"
                                 >
                                     <LogIn size={12} /> JUNTAR-SE

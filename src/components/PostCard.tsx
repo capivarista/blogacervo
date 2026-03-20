@@ -90,7 +90,7 @@ export default function PostCard({ post }: { post: Post }) {
                     <img
                         src={post.imagem_url}
                         alt={post.titulo}
-                        className="w-auto h-auto max-w-full max-h-[450px] object-contain"
+                        className="w-auto h-auto max-w-full max-h-96 object-cover border border-[#00ff88]/30"
                         onError={() => setImageError(true)}
                     />
                 </div>
