@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from 'sonner';
 import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const geistSans = Geist({
     variable: "--font-geist-sans",
@@ -48,8 +49,8 @@ export default function RootLayout({
         >
         {children}
 
-        {/* O rastreador da Vercel entra aqui, logo após o conteúdo da página */}
         <Analytics />
+        <SpeedInsights />
 
         <Toaster position="top-right" richColors theme="dark" />
         </body>
